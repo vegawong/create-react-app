@@ -22,7 +22,10 @@ function writeJson(fileName, object) {
 }
 
 function verifyNoTypeScript() {
-  const typescriptFiles = globby(['**/*.(ts|tsx)', '!**/node_modules', '!**/*.d.ts'], { cwd: paths.appSrc });
+  const typescriptFiles = globby(
+    ['**/*.(ts|tsx)', '!**/node_modules', '!**/*.d.ts'],
+    { cwd: paths.appSrc }
+  );
   if (typescriptFiles.length > 0) {
     console.warn(
       chalk.yellow(
@@ -120,6 +123,12 @@ function verifyTypeScriptSetup() {
       parsedValue: ts.JsxEmit.Preserve,
       value: 'preserve',
       reason: 'JSX is compiled by Babel',
+    },
+    experimentalDecorators: {
+      suggested: true,
+    },
+    baseUrl: {
+      suggested: 'src',
     },
     // We do not support absolute imports, though this may come as a future
     // enhancement

@@ -94,16 +94,34 @@ module.exports = function(
   const useTypeScript = appPackage.dependencies['typescript'] != null;
 
   // Setup the script rules
-  appPackage.scripts = {
-    start: 'react-scripts start',
-    build: 'react-scripts build',
-    test: 'react-scripts test',
-    eject: 'react-scripts eject',
-  };
+  appPackage.scripts = useTypeScript
+    ? {
+        start: 'react-app-rewired start',
+        build: 'react-app-rewired build',
+        test: 'react-app-rewired test',
+      }
+    : {
+        start: 'react-scripts start',
+        build: 'react-scripts build',
+        test: 'react-scripts test',
+        eject: 'react-scripts eject',
+      };
 
   // Setup the eslint config
   appPackage.eslintConfig = {
     extends: 'react-app',
+  };
+
+  // Setup the lint-staged
+  appPackage['lint-staged'] = {
+    '*.{ts,tsx}': ['tslint --fix', 'git add'],
+    '*.{js,json,md,ts,tsx}': ['prettier --write', 'git add'],
+    '*.{css,scss,less}': ['stylelint --fix', 'prettier --write', 'git add'],
+  };
+  appPackage.husky = {
+    hooks: {
+      'pre-commit': 'lint-staged',
+    },
   };
 
   // Setup the browsers list
@@ -197,6 +215,40 @@ module.exports = function(
 
   if (useTypeScript) {
     verifyTypeScriptSetup();
+    console.log(
+      `Installing extenal packages for typescript-template using ${command}...`
+    );
+    console.log();
+
+    args.splice(args.length - 2, 2);
+    args.push(
+      'mobx',
+      'mobx-react',
+      'react-router-dom',
+      '@types/react-router-dom',
+      'axios',
+      'blueimp-md5',
+      'qs',
+      '@types/blueimp-md5',
+      '@types/qs',
+      'mobx-react-router',
+      '@types/webpack-env',
+      'tslint',
+      'tslint-config-prettier',
+      'stylelint',
+      'stylelint-config-standard',
+      'stylelint-config-css-modules',
+      'prettier',
+      'husky',
+      'lint-staged',
+      'react-app-rewired',
+      'customize-cra'
+    );
+    const proc = spawn.sync(command, args, { stdio: 'inherit' });
+    if (proc.status !== 0) {
+      console.error(`\`${command} ${args.join(' ')}\` failed`);
+      return;
+    }
   }
 
   if (tryGitInit(appPath)) {

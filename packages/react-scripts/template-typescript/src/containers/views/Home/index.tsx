@@ -1,37 +1,30 @@
 import * as React from 'react'
 import { observer, inject } from 'mobx-react'
-import { computed } from 'mobx'
 
-import * as styles from './style.css'
+import styles from './style.module.css'
 
-interface IP {
-    globalStore: IGlobalStore.GlobalStore
-    routerStore: RouterStore
+interface IMapProps {
+    title: string
 }
+type IProps = Partial<IMapProps>
 
-@inject('globalStore', 'routerStore')
+@inject(
+    (store: AppStore.IRootStore): IMapProps => {
+        return {
+            title: store.globalStore.title
+        }
+    }
+)
 @observer
-class Home extends React.Component<IP> {
-    @computed
-    get hello() {
-        const { test } = this.props.globalStore
-        return test ? test.hello : ''
-    }
-
-    routerTest = () => {
-        this.props.routerStore.push('/error')
-    }
-
+class Home extends React.Component<IProps> {
     render() {
         return (
             <div>
-                <h1 className={styles.routerTest} onClick={this.routerTest}>
-                    Hello World!
-                </h1>
-                {this.hello}
+                <h1 className={styles.title}>Hello {this.props.title!}!</h1>
             </div>
         )
     }
 }
 
 export default Home
+

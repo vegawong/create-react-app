@@ -10,23 +10,20 @@ import * as React from 'react'
 import { HashRouter as Router, Switch, Route } from 'react-router-dom'
 
 import HomePage from 'containers/views/Home'
-// import NotFoundPage from 'containers/views/NotFound'
 
 import styles from './style.module.css'
 
-const AppWrapper = props => <div className={styles.appWrapper}>{props.children}</div>
+const AppWrapper = (props: React.Props<void>) => <div className={styles.appWrapper}>{props.children}</div>
 
-export default function App(props) {
+export default function App() {
     return (
         <AppWrapper>
             <Router>
                 <Switch>
                     <Route exact path="/" component={HomePage} />
-                    {/* <Route path="*" component={NotFoundPage} /> */}
-                    {/* <Route path="/features" component={FeaturePage} />
-                    <Route path="" component={NotFoundPage} /> */}
                 </Switch>
             </Router>
         </AppWrapper>
     )
 }
+
