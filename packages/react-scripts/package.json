@@ -1,14 +1,14 @@
 {
-  "name": "react-scripts",
-  "version": "2.1.8",
-  "description": "Configuration and scripts for Create React App.",
-  "repository": "facebook/create-react-app",
+  "name": "react-scripts-fork",
+  "version": "1.0.0",
+  "description": "Configuration and scripts for Create React App. Base in react-scripts@2.1.8",
+  "repository": "vegawong/create-react-app",
   "license": "MIT",
   "engines": {
     "node": ">=8.10"
   },
   "bugs": {
-    "url": "https://github.com/facebook/create-react-app/issues"
+    "url": "https://github.com/vegawong/create-react-app/issues"
   },
   "files": [
     "bin",
