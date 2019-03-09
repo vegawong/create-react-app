@@ -112,7 +112,11 @@ module.exports = function(
       'git add',
     ];
   } else {
-    appPackage['lint-staged']['*.{js,jsx}'] = ['eslint --fix', 'prettier --write', 'git add'];
+    appPackage['lint-staged']['*.{js,jsx}'] = [
+      'eslint --fix --max-warnings=0',
+      'prettier --write',
+      'git add',
+    ];
   }
   appPackage.husky = {
     hooks: {
