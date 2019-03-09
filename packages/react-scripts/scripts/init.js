@@ -302,6 +302,9 @@ function installDependies(
   useYarn = false,
   verbose = false
 ) {
+  if (dependencies.length === 0) {
+    return;
+  }
   let command, args;
   if (useYarn) {
     command = 'yarnpkg';
