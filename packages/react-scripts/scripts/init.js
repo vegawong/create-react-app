@@ -102,17 +102,17 @@ module.exports = function(
 
   // Setup the lint-staged
   appPackage['lint-staged'] = {
-    '*.{ts,tsx}': ['tslint --fix', 'git add'],
     '*.{css,scss,less}': ['stylelint --fix', 'prettier --write', 'git add'],
     '*.{json,md}': ['prettier --write', 'git add'],
   };
   if (useTypeScript) {
     appPackage['lint-staged']['*.{js,jsx,ts,tsx}'] = [
       'tslint --fix',
+      'prettier --write',
       'git add',
     ];
   } else {
-    appPackage['lint-staged']['*.{js,jsx}'] = ['eslint --fix', 'git add'];
+    appPackage['lint-staged']['*.{js,jsx}'] = ['eslint --fix', 'prettier --write', 'git add'];
   }
   appPackage.husky = {
     hooks: {
@@ -230,6 +230,10 @@ module.exports = function(
   if (tryGitInit(appPath)) {
     console.log();
     console.log('Initialized a git repository.');
+    // husky post-install will set the git hooks after git init
+    // install it before git init, git hooks not work yet
+    console.log('Reinsall package `husky` ...');
+    installDependies('huskyResinstall', ['husky'], useYarn, verbose);
   }
 
   // Display the most elegant way to cd.
