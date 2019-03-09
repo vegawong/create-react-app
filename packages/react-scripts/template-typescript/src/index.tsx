@@ -14,7 +14,7 @@ import App from 'containers/shared/App'
 import * as store from './stores'
 
 // 开启mobx严格模式
-configure({ enforceActions: true })
+configure({ enforceActions: 'always' })
 
 const hashHistory = createHashHistory()
 const history = syncHistoryWithStore(hashHistory, store.routerStore)

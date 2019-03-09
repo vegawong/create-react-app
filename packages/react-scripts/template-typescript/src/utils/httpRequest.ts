@@ -5,8 +5,7 @@
  */
 
 import axios, { AxiosResponse, AxiosRequestConfig } from 'axios'
-import md5 from 'blueimp-md5'
-import * as qs from 'qs'
+import qs from 'qs'
 
 export enum HTTPERRORTYPE {
     LOGICERROR,

@@ -22,7 +22,10 @@ function writeJson(fileName, object) {
 }
 
 function verifyNoTypeScript() {
-  const typescriptFiles = globby(['**/*.(ts|tsx)', '!**/node_modules', '!**/*.d.ts'], { cwd: paths.appSrc });
+  const typescriptFiles = globby(
+    ['**/*.(ts|tsx)', '!**/node_modules', '!**/*.d.ts'],
+    { cwd: paths.appSrc }
+  );
   if (typescriptFiles.length > 0) {
     console.warn(
       chalk.yellow(
@@ -121,13 +124,20 @@ function verifyTypeScriptSetup() {
       value: 'preserve',
       reason: 'JSX is compiled by Babel',
     },
-    // We do not support absolute imports, though this may come as a future
-    // enhancement
     baseUrl: {
-      value: undefined,
-      reason: 'absolute imports are not supported (yet)',
+      suggested: 'src',
     },
-    paths: { value: undefined, reason: 'aliased imports are not supported' },
+    // suport decorators for mobx
+    experimentalDecorators: {
+      suggested: true,
+    },
+    // // We do not support absolute imports, though this may come as a future
+    // // enhancement
+    // baseUrl: {
+    //   value: undefined,
+    //   reason: 'absolute imports are not supported (yet)',
+    // },
+    // paths: { value: undefined, reason: 'aliased imports are not supported' },
   };
 
   const formatDiagnosticHost = {
