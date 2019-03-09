@@ -2,7 +2,10 @@
   "name": "@vegawong/react-scripts",
   "version": "2.1.10",
   "description": "Configuration and scripts for Create React App.",
-  "repository": "vegawong/create-react-app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vegawong/create-react-app/tree/vegawong/react-scripts"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=8.10"
