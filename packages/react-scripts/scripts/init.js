@@ -95,16 +95,37 @@ module.exports = function(
 
   // Setup the script rules
   appPackage.scripts = {
-    start: 'react-scripts start',
-    build: 'react-scripts build',
-    test: 'react-scripts test',
-    eject: 'react-scripts eject',
+    start: 'react-app-rewired start',
+    build: 'react-app-rewired build',
+    test: 'react-app-rewired test',
   };
 
-  // Setup the eslint config
-  appPackage.eslintConfig = {
-    extends: 'react-app',
+  // Setup the lint-staged
+  appPackage['lint-staged'] = {
+    '*.{ts,tsx}': ['tslint --fix', 'git add'],
+    '*.{css,scss,less}': ['stylelint --fix', 'prettier --write', 'git add'],
+    '*.{json,md}': ['prettier --write', 'git add'],
   };
+  if (useTypeScript) {
+    appPackage['lint-staged']['*.{js,jsx,ts,tsx}'] = [
+      'tslint --fix',
+      'git add',
+    ];
+  } else {
+    appPackage['lint-staged']['*.{js,jsx}'] = ['eslint --fix', 'git add'];
+  }
+  appPackage.husky = {
+    hooks: {
+      'pre-commit': 'lint-staged',
+    },
+  };
+
+  if (!useTypeScript) {
+    // Setup the eslint config
+    appPackage.eslintConfig = {
+      extends: 'react-app',
+    };
+  }
 
   // Setup the browsers list
   appPackage.browserslist = defaultBrowsers;
@@ -180,6 +201,13 @@ module.exports = function(
     );
     fs.unlinkSync(templateDependenciesPath);
   }
+
+  // Install additional commonDependencies for all tempaltes
+  installCommonDependies(useYarn, verbose);
+  // Install additional dependencies for speifical template
+  useTypeScript
+    ? installDependiesForTSTemplate(useYarn, verbose)
+    : installDependiesForESTemplate(useYarn, verbose);
 
   // Install react and react-dom for backward compatibility with old CRA cli
   // which doesn't install react and react-dom along with react-scripts
@@ -265,4 +293,68 @@ function isReactInstalled(appPackage) {
     typeof dependencies.react !== 'undefined' &&
     typeof dependencies['react-dom'] !== 'undefined'
   );
+}
+
+// function to install dependencies
+function installDependies(
+  actionName,
+  dependencies = [],
+  useYarn = false,
+  verbose = false
+) {
+  let command, args;
+  if (useYarn) {
+    command = 'yarnpkg';
+    args = ['add'];
+  } else {
+    command = 'npm';
+    args = ['install', '--save', verbose && '--verbose'].filter(e => e);
+  }
+
+  args = args.concat(dependencies);
+
+  console.log(
+    `Installing additional ${actionName} dependencies for all tempaltes using ${command}...`
+  );
+
+  const proc = spawn.sync(command, args, { stdio: 'inherit' });
+  if (proc.status !== 0) {
+    console.error(`\`${command} ${args.join(' ')}\` failed`);
+    return;
+  }
+}
+
+// install common dependencies for all template
+function installCommonDependies(useYarn, verbose) {
+  const commonDependenciesPath = path.join(
+    __dirname,
+    '../config/common.dependencies.json'
+  );
+  const commonDependencies = require(commonDependenciesPath).dependencies;
+  let args = [];
+  args = args.concat(
+    Object.keys(commonDependencies).map(key => {
+      return `${key}@${commonDependencies[key]}`;
+    })
+  );
+  installDependies('common', args, useYarn, verbose);
+}
+
+// install dependencies for default es template
+function installDependiesForESTemplate(useYarn, verbose) {
+  const dependencies = [];
+  installDependies('defaultTemplate', dependencies, useYarn, verbose);
+}
+
+// install dependencies for typescript template
+function installDependiesForTSTemplate(useYarn, verbose) {
+  const dependencies = [
+    '@types/react-router-dom',
+    '@types/webpack-env',
+    'tslint',
+    'tslint-config-prettier',
+    '@types/qs',
+    '@types/blueimp-md5',
+  ];
+  installDependies('typescriptTemplate', dependencies, useYarn, verbose);
 }
