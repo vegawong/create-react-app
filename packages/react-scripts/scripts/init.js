@@ -95,7 +95,7 @@ module.exports = function(
 
   // Setup the script rules
   appPackage.scripts = {
-      start: 'react-app-rewired start --scripts-version @vegawong/react-scripts',
+    start: 'react-app-rewired start --scripts-version @vegawong/react-scripts',
     build: 'react-app-rewired build --scripts-version @vegawong/react-scripts',
     test: 'react-app-rewired test --scripts-version @vegawong/react-scripts',
   };
@@ -128,6 +128,11 @@ module.exports = function(
     // Setup the eslint config
     appPackage.eslintConfig = {
       extends: 'react-app',
+      parserOptions: {
+        ecmaFeatures: {
+          legacyDecorators: true,
+        },
+      },
     };
   }
 

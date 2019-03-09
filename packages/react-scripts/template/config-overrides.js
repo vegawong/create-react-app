@@ -1,5 +1,5 @@
 const path = require('path')
-const { override } = require('customize-cra')
+const { override, addDecoratorsLegacy } = require('customize-cra')
 
 // you can add any feature from custome-cra if you need
 // like:
@@ -14,10 +14,9 @@ const { override } = require('customize-cra')
 //     return config
 // })
 
-module.exports = override((config, env) => {
+module.exports = override(addDecoratorsLegacy(), (config, env) => {
     // do stuff with the webpack config...
     // additional here
     config.resolve.modules.push(path.join(__dirname, 'src'))
     return config
 })
-
