@@ -4,6 +4,6 @@ import * as Store from '.'
 
 export type IRootStore = typeof Store
 
-export { GlobalStore } from './globalStore'
+export * from './globalStore'
 
 
