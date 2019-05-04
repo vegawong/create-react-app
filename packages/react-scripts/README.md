@@ -19,6 +19,15 @@ $ create-react-app <project-name> --scripts-version=@vegawong/react-scripts [opt
 
 - integrate `mobx` & `react-route`
 
+- support use `baseUrl` as `src` when you import relative modules, such as 
+
+  ```
+  import App from 'container/shared/App'
+  // but you don't need to write `from '../../../containers...`
+  ```
+
+  it was supported in ts modules solutions & webpack
+  
 - customize the files skeleton
 
     - `src/containers/shared/`: for common used container components
@@ -34,3 +43,18 @@ $ create-react-app <project-name> --scripts-version=@vegawong/react-scripts [opt
     - `src/utils`: utils files
 
     - `src/stores`: mobx store modules 
+
+
+## ChangeLog
+
+### 3.0.0(2019.5.4) 
+
+- sync v3.0.0 from the `react-scripts`
+
+   - use `@typescript-eslint` instead of `tslint`
+
+   - support lint the react-hooks with `eslint`
+
+
+- something changed to `httpRequest.js` to catch the error more freedom
+
