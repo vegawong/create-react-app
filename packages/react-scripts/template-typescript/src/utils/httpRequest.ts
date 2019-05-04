@@ -13,29 +13,31 @@ export enum HTTPERRORTYPE {
     NETWORKERROR
 }
 
-export interface IHttpError {
+export interface IError {
     msg: string
     type: string
     config: AxiosRequestConfig
     status?: number
 }
 
-export interface IHttpResponse<T = PlainObject> {
+export interface IResponse<T = IPlainObject> {
     status: number
     data: T
     msg?: string
 }
 
-const API_URL_PREFIX = process.env.REACT_APP_API_URL_PREFIX || ''
-
-export interface IHttpRequestOptions {
+export interface IRequestOption {
     /**
      * 请求接口的path前缀，默认使用环境设置的apiUrlPrefix
      *
-     * @type {string}
-     * @memberof HttpRequestOptions
      */
     baseUrl?: string
+
+    /**
+     * 非get请求下请求参数的格式化处理，默认使用qs处理
+     * 如果需要以json方式传递参数，返回对象格式即可
+     */
+    requestBodyFormatter?: (formData: any) => any
 
     /**
      * 是否开启跨域cookies, 默认false
@@ -47,21 +49,13 @@ export interface IHttpRequestOptions {
      * 请求结果格式化处理
      *
      */
-    responseFormatter?: <T>(res: AxiosResponse<any>) => IHttpResponse<T>
+    responseFormatter?: <T>(axiosRes: AxiosResponse<any>) => IResponse<T>
 
     /**
-     * 请求结果提取，目的在于去掉status，msg等辅助字段，提取逻辑数据
-     * 默认不设置则原结果返回
-     *
+     * 是否提取返回对象中的数据字段
+     * Default: true
      */
-    responseExtractor?: <T>(httpResponse: IHttpResponse) => T
-
-    /**
-     * 获取请求结果的逻辑状态
-     * 默认不设置，则返回res.code
-     *
-     */
-    responseStatusGetter?: (res: IHttpResponse) => number
+    isExtractor?: boolean
 
     /**
      * 判断请求结果是否是预计正确处理的返回
@@ -69,21 +63,44 @@ export interface IHttpRequestOptions {
      * 如果不需要判断， 请设置: () => true
      *
      */
-    isSuccess?: (res: IHttpResponse) => boolean
+    isSuccess?: (res: IResponse) => boolean
 
     /**
      * 错误回调， 默认不做任何处理
      *
-     * @memberof HttpRequestOptions
      */
-    onError?: (error: IHttpError) => any
+    onError?: (error: IError) => any
+
+    /**
+     * 请求头
+     * Default: {}
+     */
+    headers?: IPlainObject
 }
 
-export type IHttpRequestAction = <T = PlainObject>(
+const defaultOptions: IRequestOption = {
+    baseUrl: process.env.REACT_APP_API_URL_PREFIX,
+    requestBodyFormatter: formData => qs.stringify(formData),
+    withCredentials: false,
+    responseFormatter: axiosRes => {
+        const data = axiosRes.data || {}
+        return {
+            status: data.code,
+            data: data.response || data.data,
+            msg: data.msg
+        }
+    },
+    isExtractor: true,
+    isSuccess: res => Number(res.status) === 1,
+    onError: () => null,
+    headers: {}
+}
+
+export type IHttpRequestAction = <T = IPlainObject>(
     url: string,
-    data: PlainObject,
-    options?: IHttpRequestOptions
-) => Promise<T>
+    data: IPlainObject,
+    options?: IRequestOption
+) => Promise<T | IResponse<T>>
 
 const http: {
     get?: IHttpRequestAction
@@ -91,18 +108,6 @@ const http: {
     put?: IHttpRequestAction
     delete?: IHttpRequestAction
 } = {}
-
-const defaultResponseFormatter = (res: AxiosResponse<any>) => {
-    const data = res.data || {}
-    return {
-        status: data.code,
-        data: data.response || data.data,
-        msg: data.msg || ''
-    }
-}
-const defaultIsSuccess = (res: IHttpResponse) => Number(res.status === 1)
-const defaultGetResponseStatus = (res: IHttpResponse) => Number(res.status)
-const defaultResponseExtractor = (res: IHttpResponse) => res
 
 type Methods = ['get', 'post', 'put', 'delete']
 const methods: Methods = ['get', 'post', 'put', 'delete']
@@ -128,7 +133,10 @@ requestInstance.interceptors.response.use(
         return response
     },
     error => {
-        const errorDetail: IHttpError = {
+        if (error.response) {
+            return Promise.resolve(error.response)
+        }
+        const errorDetail: IError = {
             msg: error.message || '网络故障',
             type: /^timeout of/.test(error.message)
                 ? HTTPERRORTYPE[HTTPERRORTYPE.TIMEOUTERROR]
@@ -140,25 +148,15 @@ requestInstance.interceptors.response.use(
 )
 
 methods.forEach(method => {
-    http[method] = async <T>(url: string, data: PlainObject, options?: IHttpRequestOptions) => {
-        const opts: IHttpRequestOptions = Object.assign(
-            {
-                baseUrl: API_URL_PREFIX, // 默认apiUrl前缀使用环境配置，特殊接口可以通过httpRequestOptions覆盖
-                formatResponse: true,
-                withCredentials: false,
-                isSuccess: defaultIsSuccess,
-                responseFormatter: defaultResponseFormatter,
-                responseExtractor: defaultResponseExtractor,
-                responseStatusGetter: defaultGetResponseStatus
-            },
-            options || {}
-        )
+    http[method] = async <T>(url: string, data: IPlainObject, options?: IRequestOption) => {
+        const opts: IRequestOption = Object.assign({}, defaultOptions, options || {})
 
         const axiosConfig: AxiosRequestConfig = {
             method,
             url,
             baseURL: opts.baseUrl,
-            withCredentials: opts.withCredentials
+            withCredentials: opts.withCredentials,
+            headers: opts.headers
         }
 
         // 参数传递方式
@@ -167,17 +165,14 @@ methods.forEach(method => {
         } else if (data instanceof FormData) {
             axiosConfig.data = data
         } else {
-            axiosConfig.data = qs.stringify(data)
+            axiosConfig.data = opts.requestBodyFormatter!(data)
         }
 
         return requestInstance
             .request(axiosConfig)
-            .then<T>(response => {
-                let rdata: IHttpResponse<T>
-                if (
-                    typeof response.data === 'object' &&
-                    Array.isArray(response.data)
-                ) {
+            .then<T | IResponse<T>>(response => {
+                let rdata: IResponse<T>
+                if (typeof response.data === 'object' && Array.isArray(response.data)) {
                     // 防止php接口返回数组而不是对象
                     return Promise.reject({
                         msg: '接口返回的格式不能为数组',
@@ -189,17 +184,17 @@ methods.forEach(method => {
                     rdata = opts.responseFormatter!(response)
                 }
                 if (!opts.isSuccess!(rdata)) {
-                    const errorDetail: IHttpError = {
+                    const errorDetail: IError = {
                         msg: rdata.msg || '',
-                        status: opts.responseStatusGetter!(rdata),
+                        status: rdata.status,
                         type: HTTPERRORTYPE[HTTPERRORTYPE.LOGICERROR],
                         config: response.config
                     }
                     return Promise.reject(errorDetail)
                 }
-                return opts.responseExtractor!(rdata)
+                return !!opts.isExtractor ? rdata.data : rdata
             })
-            .catch((err: IHttpError) => {
+            .catch((err: IError) => {
                 if (opts.onError) {
                     opts.onError!(err)
                 }
@@ -209,3 +204,4 @@ methods.forEach(method => {
 })
 
 export default http
+

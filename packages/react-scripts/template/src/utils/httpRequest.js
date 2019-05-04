@@ -12,22 +12,25 @@ export const HTTPERRORTYPE = {
     TIMEOUTERROR: 'TIMEOUTERROR',
     NETWORKERROR: 'NETWORKERROR'
 }
-
-const API_URL_PREFIX = process.env.REACT_APP_API_URL_PREFIX || ''
+const defaultOptions = {
+    baseUrl: process.env.REACT_APP_API_URL_PREFIX,
+    requestBodyFormatter: formData => qs.stringify(formData),
+    withCredentials: false,
+    responseFormatter: axiosRes => {
+        const data = axiosRes.data || {}
+        return {
+            status: data.code,
+            data: data.response || data.data,
+            msg: data.msg
+        }
+    },
+    isExtractor: true,
+    isSuccess: res => Number(res.status) === 1,
+    onError: () => null,
+    headers: {}
+}
 
 const http = {}
-
-const defaultResponseFormatter = res => {
-    const data = res.data || {}
-    return {
-        status: data.code,
-        data: data.response || data.data,
-        msg: data.msg || ''
-    }
-}
-const defaultIsSuccess = res => Number(res.status === 1)
-const defaultGetResponseStatus = res => Number(res.status)
-const defaultResponseExtractor = res => res
 
 const methods = ['get', 'post', 'put', 'delete']
 
@@ -52,9 +55,14 @@ requestInstance.interceptors.response.use(
         return response
     },
     error => {
+        if (error.response) {
+            return Promise.resolve(error.response)
+        }
         const errorDetail = {
             msg: error.message || '网络故障',
-            type: /^timeout of/.test(error.message) ? HTTPERRORTYPE.TIMEOUTERROR : HTTPERRORTYPE.NETWORKERROR,
+            type: /^timeout of/.test(error.message)
+                ? HTTPERRORTYPE[HTTPERRORTYPE.TIMEOUTERROR]
+                : HTTPERRORTYPE[HTTPERRORTYPE.NETWORKERROR],
             config: error.config
         }
         return Promise.reject(errorDetail)
@@ -62,25 +70,15 @@ requestInstance.interceptors.response.use(
 )
 
 methods.forEach(method => {
-    http[method] = async (url, data, options?) => {
-        const opts = Object.assign(
-            {
-                baseUrl: API_URL_PREFIX, // 默认apiUrl前缀使用环境配置，特殊接口可以通过httpRequestOptions覆盖
-                formatResponse: true,
-                withCredentials: false,
-                isSuccess: defaultIsSuccess,
-                responseFormatter: defaultResponseFormatter,
-                responseExtractor: defaultResponseExtractor,
-                responseStatusGetter: defaultGetResponseStatus
-            },
-            options || {}
-        )
+    http[method] = async (url, data, options) => {
+        const opts = Object.assign({}, defaultOptions, options || {})
 
         const axiosConfig = {
             method,
             url,
             baseURL: opts.baseUrl,
-            withCredentials: opts.withCredentials
+            withCredentials: opts.withCredentials,
+            headers: opts.headers
         }
 
         // 参数传递方式
@@ -89,7 +87,7 @@ methods.forEach(method => {
         } else if (data instanceof FormData) {
             axiosConfig.data = data
         } else {
-            axiosConfig.data = qs.stringify(data)
+            axiosConfig.data = opts.requestBodyFormatter(data)
         }
 
         return requestInstance
@@ -101,7 +99,7 @@ methods.forEach(method => {
                     return Promise.reject({
                         msg: '接口返回的格式不能为数组',
                         status: 501,
-                        type: HTTPERRORTYPE.LOGICERROR,
+                        type: HTTPERRORTYPE[HTTPERRORTYPE.LOGICERROR],
                         config: response.config
                     })
                 } else {
@@ -110,13 +108,13 @@ methods.forEach(method => {
                 if (!opts.isSuccess(rdata)) {
                     const errorDetail = {
                         msg: rdata.msg || '',
-                        status: opts.responseStatusGetter(rdata),
-                        type: HTTPERRORTYPE.LOGICERROR,
+                        status: rdata.status,
+                        type: HTTPERRORTYPE[HTTPERRORTYPE.LOGICERROR],
                         config: response.config
                     }
                     return Promise.reject(errorDetail)
                 }
-                return opts.responseExtractor(rdata)
+                return !!opts.isExtractor ? rdata.data : rdata
             })
             .catch(err => {
                 if (opts.onError) {
@@ -128,4 +126,3 @@ methods.forEach(method => {
 })
 
 export default http
-

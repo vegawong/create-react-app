@@ -1,3 +1,3 @@
-interface PlainObject {
+interface IPlainObject {
     [key: string]: any
 }

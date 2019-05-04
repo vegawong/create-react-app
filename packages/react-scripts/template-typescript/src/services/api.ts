@@ -2,7 +2,7 @@ import http from 'utils/httpRequest'
 import { DEFAULT_HTTP_OPTION } from './conf'
 import md5 from 'blueimp-md5'
 
-export async function login(params: PlainObject) {
+export async function login(params: IPlainObject) {
     return http.post!(
         '/sys/user/login',
         {

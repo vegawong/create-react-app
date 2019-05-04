@@ -102,39 +102,31 @@ module.exports = function(
 
   // Setup the lint-staged
   appPackage['lint-staged'] = {
-    '*.{css,scss,less}': ['stylelint --fix', 'prettier --write', 'git add'],
-    '*.{json,md}': ['prettier --write', 'git add'],
-  };
-  if (useTypeScript) {
-    appPackage['lint-staged']['*.{js,jsx,ts,tsx}'] = [
-      'tslint --fix',
-      'prettier --write',
-      'git add',
-    ];
-  } else {
-    appPackage['lint-staged']['*.{js,jsx}'] = [
+    'src/**/*.{js,jsx,ts,tsx}': [
       'eslint --fix --max-warnings=0',
       'prettier --write',
       'git add',
-    ];
-  }
+    ],
+    'src/**/*.{css,scss,less}': [
+      'stylelint --fix',
+      'prettier --write',
+      'git add',
+    ],
+    '*.{json,md}': ['prettier --write', 'git add'],
+  };
   appPackage.husky = {
     hooks: {
       'pre-commit': 'lint-staged',
     },
   };
 
-  if (!useTypeScript) {
-    // Setup the eslint config
-    appPackage.eslintConfig = {
-      extends: 'react-app',
-      parserOptions: {
-        ecmaFeatures: {
-          legacyDecorators: true,
-        },
-      },
-    };
-  }
+  // Setup the eslint config
+  appPackage.eslintConfig = {
+    extends: 'react-app',
+    rules: {
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+    },
+  };
 
   // Setup the browsers list
   appPackage.browserslist = defaultBrowsers;
@@ -367,8 +359,6 @@ function installDependiesForTSTemplate(useYarn, verbose) {
   const dependencies = [
     '@types/react-router-dom',
     '@types/webpack-env',
-    'tslint',
-    'tslint-config-prettier',
     '@types/qs',
     '@types/blueimp-md5',
   ];
