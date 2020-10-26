@@ -213,9 +213,6 @@ module.exports = function (
   // Setup the eslint config
   appPackage.eslintConfig = {
     extends: 'react-app',
-    rules: {
-      'no-console': ['error', { allow: ['warn', 'error'] }],
-    },
   };
 
   // Setup the browsers list
@@ -315,13 +312,6 @@ module.exports = function (
       })
     );
   }
-
-  // Install additional commonDependencies for all tempaltes
-  installCommonDependies(useYarn, verbose);
-  // Install additional dependencies for speifical template
-  useTypeScript
-    ? installDependiesForTSTemplate(useYarn, verbose)
-    : installDependiesForESTemplate(useYarn, verbose);
 
   // Install react and react-dom for backward compatibility with old CRA cli
   // which doesn't install react and react-dom along with react-scripts
@@ -425,69 +415,4 @@ function isReactInstalled(appPackage) {
     typeof dependencies.react !== 'undefined' &&
     typeof dependencies['react-dom'] !== 'undefined'
   );
-}
-
-// function to install dependencies
-function installDependies(
-  actionName,
-  dependencies = [],
-  useYarn = false,
-  verbose = false
-) {
-  if (dependencies.length === 0) {
-    return;
-  }
-  let command, args;
-  if (useYarn) {
-    command = 'yarnpkg';
-    args = ['add'];
-  } else {
-    command = 'npm';
-    args = ['install', '--save', verbose && '--verbose'].filter(e => e);
-  }
-
-  args = args.concat(dependencies);
-
-  console.log(
-    `Installing additional ${actionName} dependencies for all tempaltes using ${command}...`
-  );
-
-  const proc = spawn.sync(command, args, { stdio: 'inherit' });
-  if (proc.status !== 0) {
-    console.error(`\`${command} ${args.join(' ')}\` failed`);
-    return;
-  }
-}
-
-// install common dependencies for all template
-function installCommonDependies(useYarn, verbose) {
-  const commonDependenciesPath = path.join(
-    __dirname,
-    '../config/common.dependencies.json'
-  );
-  const commonDependencies = require(commonDependenciesPath).dependencies;
-  let args = [];
-  args = args.concat(
-    Object.keys(commonDependencies).map(key => {
-      return `${key}@${commonDependencies[key]}`;
-    })
-  );
-  installDependies('common', args, useYarn, verbose);
-}
-
-// install dependencies for default es template
-function installDependiesForESTemplate(useYarn, verbose) {
-  const dependencies = [];
-  installDependies('defaultTemplate', dependencies, useYarn, verbose);
-}
-
-// install dependencies for typescript template
-function installDependiesForTSTemplate(useYarn, verbose) {
-  const dependencies = [
-    '@types/react-router-dom',
-    '@types/webpack-env',
-    '@types/qs',
-    '@types/blueimp-md5',
-  ];
-  installDependies('typescriptTemplate', dependencies, useYarn, verbose);
 }

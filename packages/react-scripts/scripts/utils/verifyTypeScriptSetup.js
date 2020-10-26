@@ -156,20 +156,7 @@ function verifyTypeScriptSetup() {
           : 'react',
       reason: 'to support the new JSX transform in React 17',
     },
-    baseUrl: {
-      suggested: 'src',
-    },
-    // suport decorators for mobx
-    experimentalDecorators: {
-      suggested: true,
-    },
-    // // We do not support absolute imports, though this may come as a future
-    // // enhancement
-    // baseUrl: {
-    //   value: undefined,
-    //   reason: 'absolute imports are not supported (yet)',
-    // },
-    // paths: { value: undefined, reason: 'aliased imports are not supported' },
+    paths: { value: undefined, reason: 'aliased imports are not supported' },
   };
 
   const formatDiagnosticHost = {
@@ -297,7 +284,7 @@ function verifyTypeScriptSetup() {
   if (!fs.existsSync(paths.appTypeDeclarations)) {
     fs.writeFileSync(
       paths.appTypeDeclarations,
-        `/// <reference types="@vegawong/react-scripts" />${os.EOL}`
+      `/// <reference types="react-scripts" />${os.EOL}`
     );
   }
 }
